@@ -111,7 +111,8 @@ def train_one_epoch(
     device = next(model.parameters()).device
 
     for i, d in enumerate(train_dataloader):
-        d = d.to(device)
+        d = d.to(device)#, dtype=torch.float)
+
 
         optimizer.zero_grad()
         aux_optimizer.zero_grad()
@@ -151,7 +152,7 @@ def test_epoch(epoch, test_dataloader, model, criterion):
 
     with torch.no_grad():
         for d in test_dataloader:
-            d = d.to(device)
+            d = d.to(device) #, dtype=torch.float)
             out_net = model(d)
             out_criterion = criterion(out_net, d)
 
@@ -292,7 +293,7 @@ def main(argv):
         pin_memory=(device == "cuda"),
     )
 
-    net = image_models[args.model](quality=3)
+    net = image_models[args.model](quality=3, pretrained=True)
     net = net.to(device)
 
     if args.cuda and torch.cuda.device_count() > 1:
