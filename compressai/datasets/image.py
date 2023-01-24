@@ -30,10 +30,14 @@
 from pathlib import Path
 
 from PIL import Image
+from aicsimageio import AICSImage
 from torch.utils.data import Dataset
-
+import numpy as np
+import torch
 from compressai.registry import register_dataset
-
+from skimage.color import gray2rgb
+from torchvision import transforms
+import warnings
 
 @register_dataset("ImageFolder")
 class ImageFolder(Dataset):
@@ -58,6 +62,7 @@ class ImageFolder(Dataset):
     """
 
     def __init__(self, root, transform=None, split="train"):
+        warnings.simplefilter(action='ignore', category=FutureWarning)
         splitdir = Path(root) / split
 
         if not splitdir.is_dir():
@@ -68,6 +73,7 @@ class ImageFolder(Dataset):
         self.transform = transform
 
     def __getitem__(self, index):
+        
         """
         Args:
             index (int): Index
@@ -75,10 +81,34 @@ class ImageFolder(Dataset):
         Returns:
             img: `PIL.Image.Image` or transformed `PIL.Image.Image`.
         """
-        img = Image.open(self.samples[index]).convert("RGB")
-        if self.transform:
-            return self.transform(img)
+        img = AICSImage(self.samples[index]).get_image_data("YX") 
+        # img = Image.open(self.samples[index])#.convert("RGB")
+        img = img.astype(np.float32)
+
+        img = (img - np.min(img)) / (np.max(img) - np.min(img))
+        img = np.stack((img,)*3, axis=-1)
+        img = img.transpose(2,0,1)
+        img = torch.tensor(img)
+        #print(np.shape(np.transpose(img, (2,0,1))))
+        # img = img.transpose(2,0,1)
+        # img = torch.tensor(img)
+        # print(img.shape)
+        mytransform = transforms.Compose([
+        transforms.RandomCrop(256)
+        ])
+        # scripted_transforms = torch.jit.script(transform)
+        img = mytransform(img)
         return img
+        # img = Image.fromarray(img)
+        
+        # img.save('/mnt/eternus/users/Jan/'+str(index)+'.tiff')
+
+        #img = AICSImage(self.samples[index]).get_image_data("YX") 
+        #img = gray2rgb(img)
+
+        # if self.transform:
+        #     return self.transform(img)
+        # return img
 
     def __len__(self):
         return len(self.samples)

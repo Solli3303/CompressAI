@@ -47,6 +47,10 @@ from torchvision.transforms import ToPILImage, ToTensor
 
 import compressai
 
+from aicsimageio import AICSImage
+from pathlib import Path
+from aicsimageio.writers import OmeTiffWriter
+
 from compressai.datasets import RawVideoSequence, VideoFormat
 from compressai.transforms.functional import (
     rgb2ycbcr,
@@ -101,7 +105,13 @@ def filesize(filepath: str) -> int:
 
 
 def load_image(filepath: str) -> Image.Image:
-    return Image.open(filepath).convert("RGB")
+    #return Image.open(filepath).convert("RGB")
+    img = AICSImage(filepath).get_image_data("YX") 
+    img = img.astype(np.float32)
+    img = (img - np.min(img)) / (np.max(img) - np.min(img))
+    img = np.stack((img,)*3, axis=-1)
+    #img = img.transpose(2,0,1)
+    return img
 
 
 def img2torch(img: Image.Image) -> torch.Tensor:
@@ -279,6 +289,7 @@ def encode_image(input, codec: CodecInfo, output):
             raise NotImplementedError(f"Unsupported video format: {org_seq.format}")
         x = convert_yuv420_rgb(org_seq[0], codec.device, max_val)
     else:
+        print(input)
         img = load_image(input)
         x = img2torch(img)
         bitdepth = 8
@@ -420,7 +431,11 @@ def decode_image(f, codec: CodecInfo, output):
             with Path(output).open("wb") as fout:
                 write_frame(fout, rec, codec.original_bitdepth)
         else:
-            img.save(output)
+            #8 bit Werte????
+            print(np.amax(np.array(img)))
+            OmeTiffWriter.save(np.array(img)[:,:,0].astype(np.int16), output, dim_order='YX')
+            #img = img.convert("L")
+            #img.save(output)
 
     return {"img": img}
 
