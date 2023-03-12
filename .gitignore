@@ -142,3 +142,6 @@ dmypy.json
 .idea/
 runs/
 *.pth.tar
+*.pt
+checkpoint.pth.tar
+checkpoint_best_loss.pth.tar
