@@ -126,17 +126,18 @@ def update_registered_buffers(
 
 
 def conv(in_channels, out_channels, kernel_size=5, stride=2):
-    return nn.Conv2d(
+    out = nn.Conv3d(
         in_channels,
         out_channels,
         kernel_size=kernel_size,
         stride=stride,
         padding=kernel_size // 2,
     )
+    return out 
 
 
 def deconv(in_channels, out_channels, kernel_size=5, stride=2):
-    return nn.ConvTranspose2d(
+    return nn.ConvTranspose3d(
         in_channels,
         out_channels,
         kernel_size=kernel_size,

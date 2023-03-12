@@ -42,6 +42,17 @@ from torchvision import transforms
 from compressai.datasets import ImageFolder
 from compressai.losses import RateDistortionLoss
 from compressai.zoo import image_models
+from monai.transforms import RandSpatialCrop
+import monai.transforms as transforms
+from aicsimageio.writers import OmeTiffWriter
+from torch.utils.tensorboard import SummaryWriter
+
+writer = SummaryWriter()
+
+class MetaToTensor(transforms.Transform):
+    def __call__(self, data):
+        # transforming monai meta tensor to pytorch tensor
+        return data.as_tensor()#.unsqueeze(0)
 
 
 class AverageMeter:
@@ -120,10 +131,17 @@ def train_one_epoch(
         out_net = model(d)
 
         out_criterion = criterion(out_net, d)
+
+        writer.add_scalar('Loss/mse_loss', out_criterion["mse_loss"], global_step=epoch)
+        writer.add_scalar('Loss/bpp_loss', out_criterion["bpp_loss"], global_step=epoch)
+        writer.add_scalar('Loss/total_loss', out_criterion["loss"], global_step=epoch)
+
+
         out_criterion["loss"].backward()
         if clip_max_norm > 0:
             torch.nn.utils.clip_grad_norm_(model.parameters(), clip_max_norm)
         optimizer.step()
+
 
         aux_loss = model.aux_loss()
         aux_loss.backward()
@@ -152,8 +170,16 @@ def test_epoch(epoch, test_dataloader, model, criterion):
 
     with torch.no_grad():
         for d in test_dataloader:
+            image_tensor = d.squeeze(0).squeeze(0).float().detach().cpu().numpy() 
+            OmeTiffWriter.save(image_tensor[0,0,:,:,:], str(epoch)+'_src.tiff', dim_order='ZYX')
             d = d.to(device) #, dtype=torch.float)
+    
             out_net = model(d)
+
+            x_hat = out_net["x_hat"]
+            image_tensor = x_hat.squeeze(0).squeeze(0).float().detach().cpu().numpy() 
+            OmeTiffWriter.save(image_tensor[0,0,:,:,:], str(epoch)+'_val.tiff', dim_order='ZYX')
+
             out_criterion = criterion(out_net, d)
 
             aux_loss.update(model.aux_loss())
@@ -229,7 +255,7 @@ def parse_args(argv):
     )
     parser.add_argument(
         "--aux-learning-rate",
-        default=1e-3,
+        default=1e-4,
         help="Auxiliary loss learning rate (default: %(default)s)",
     )
     parser.add_argument(
@@ -265,17 +291,22 @@ def main(argv):
         random.seed(args.seed)
 
     train_transforms = transforms.Compose(
-        [transforms.RandomCrop(args.patch_size), transforms.ToTensor()]
+        [RandSpatialCrop(roi_size=(64, 128, 128), random_size= False), MetaToTensor()]
     )
 
     test_transforms = transforms.Compose(
-        [transforms.CenterCrop(args.patch_size), transforms.ToTensor()]
+        [RandSpatialCrop(roi_size=(64, 128, 128), random_size= False), MetaToTensor()]
     )
 
     train_dataset = ImageFolder(args.dataset, split="train", transform=train_transforms)
     test_dataset = ImageFolder(args.dataset, split="test", transform=test_transforms)
 
+    # Set the GPU ID to use (indexed from 0)
+    #GPU_ID = 0
+    #device = torch.device("cuda:" + str(GPU_ID) if torch.cuda.is_available() else "cpu")
     device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
+
+    print(str(device))
 
     train_dataloader = DataLoader(
         train_dataset,
@@ -293,11 +324,11 @@ def main(argv):
         pin_memory=(device == "cuda"),
     )
 
-    net = image_models[args.model](quality=3, pretrained=False)
+    net = image_models[args.model](quality=8, pretrained=False)
     net = net.to(device)
 
     if args.cuda and torch.cuda.device_count() > 1:
-        net = CustomDataParallel(net)
+        net = CustomDataParallel(net,device_ids=[0,1,2,3,4,5,6,7])
 
     optimizer, aux_optimizer = configure_optimizers(net, args)
     lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min")

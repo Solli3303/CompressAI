@@ -38,6 +38,8 @@ from compressai.registry import register_dataset
 from skimage.color import gray2rgb
 from torchvision import transforms
 import warnings
+from mmv_im2im.preprocessing.transforms import norm_around_center
+from monai.transforms import SpatialPad
 
 @register_dataset("ImageFolder")
 class ImageFolder(Dataset):
@@ -81,34 +83,26 @@ class ImageFolder(Dataset):
         Returns:
             img: `PIL.Image.Image` or transformed `PIL.Image.Image`.
         """
-        img = AICSImage(self.samples[index]).get_image_data("YX") 
-        # img = Image.open(self.samples[index])#.convert("RGB")
+
+        # Load the uint16 image
+        img = AICSImage(self.samples[index]).get_image_data("ZYX") 
+        # Convert to float32 to fit in model
         img = img.astype(np.float32)
+        # Rescale the unint16 values to be between 0 and 1
+        img = img / 65535
+        # Expand dimension
+        img = np.expand_dims(img, axis=0) #img = img.unsqueeze(0)
+        #img = norm_around_center(img)
+        # Apply transformations
+        if self.transform:
+            img= self.transform(img)
+        # Apply optional padding to fit to model shape
+        if img.shape[1]<64:
+            img = SpatialPad(spatial_size=(64,128,128))(img)
+        # Clamp values to ensure datarange between 0 and 1 after all preprocessing steps
+        return img.clamp_(0, 1)
 
-        img = (img - np.min(img)) / (np.max(img) - np.min(img))
-        img = np.stack((img,)*3, axis=-1)
-        img = img.transpose(2,0,1)
-        img = torch.tensor(img)
-        #print(np.shape(np.transpose(img, (2,0,1))))
-        # img = img.transpose(2,0,1)
-        # img = torch.tensor(img)
-        # print(img.shape)
-        mytransform = transforms.Compose([
-        transforms.RandomCrop(256)
-        ])
-        # scripted_transforms = torch.jit.script(transform)
-        img = mytransform(img)
-        return img
-        # img = Image.fromarray(img)
-        
-        # img.save('/mnt/eternus/users/Jan/'+str(index)+'.tiff')
 
-        #img = AICSImage(self.samples[index]).get_image_data("YX") 
-        #img = gray2rgb(img)
-
-        # if self.transform:
-        #     return self.transform(img)
-        # return img
 
     def __len__(self):
         return len(self.samples)

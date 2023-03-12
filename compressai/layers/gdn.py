@@ -75,12 +75,12 @@ class GDN(nn.Module):
         self.gamma = nn.Parameter(gamma)
 
     def forward(self, x: Tensor) -> Tensor:
-        _, C, _, _ = x.size()
+        B, C, D, H, W = x.size() #_, C, _, _ = x.size()
 
         beta = self.beta_reparam(self.beta)
         gamma = self.gamma_reparam(self.gamma)
-        gamma = gamma.reshape(C, C, 1, 1)
-        norm = F.conv2d(x**2, gamma, beta)
+        gamma = gamma.reshape(C, C, 1, 1, 1) #gamma = gamma.reshape(C, C, 1, 1,)
+        norm = F.conv3d(x**2, gamma, beta)#norm = F.conv2d(x**2, gamma, beta)
 
         if self.inverse:
             norm = torch.sqrt(norm)
@@ -92,7 +92,7 @@ class GDN(nn.Module):
         return out
 
 
-class GDN1(GDN):
+class GDN1(GDN): #Changed to GDN1 because simpler, used normal GDN before
     r"""Simplified GDN layer.
 
     Introduced in `"Computationally Efficient Neural Image Compression"
@@ -106,12 +106,12 @@ class GDN1(GDN):
     """
 
     def forward(self, x: Tensor) -> Tensor:
-        _, C, _, _ = x.size()
+        B, C, D, H, W = x.size() #_, C, _, _ = x.size()
 
         beta = self.beta_reparam(self.beta)
         gamma = self.gamma_reparam(self.gamma)
-        gamma = gamma.reshape(C, C, 1, 1)
-        norm = F.conv2d(torch.abs(x), gamma, beta)
+        gamma = gamma.reshape(C, C, 1, 1, 1) #gamma.reshape(C, C, 1, 1)
+        norm = F.conv3d(torch.abs(x), gamma, beta)#norm = F.conv2d(torch.abs(x), gamma, beta)
 
         if not self.inverse:
             norm = 1.0 / norm

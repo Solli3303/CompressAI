@@ -1,0 +1,72 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+
+            
+        {
+            "name": "CompressAI Train 3D",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "-d", "/mnt/eternus/users/Jan/code/data_3D/labelfree3D/FBL/", 
+                "--model", "bmshj2018-hyperprior", 
+                "--epochs", "1000", 
+                "-lr", "1e-4", 
+                "--batch-size", "32",
+                "--num-workers", "16",
+                "--cuda", 
+                "--save",
+                //"--checkpoint", "/mnt/eternus/users/Jan/data/compressai/checkpoint.pth.tar"
+            ]
+        },
+
+        {
+            "name": "CompressAI Encode 3D",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "encode",
+                "/mnt/eternus/users/Jan/code/data_3D/labelfree3D/FBL/train/7624_IM.tiff", 
+                "--model", "bmshj2018-hyperprior", 
+                "--metric", "mse", 
+                "-o", "/mnt/eternus/users/Jan/code/data_3D/labelfree3D/FBL/7624_IM_encoded",
+                "--checkpoint", "/mnt/eternus/users/Jan/data/compressai/checkpoint_best_loss.pth.tar",
+                "--cuda", 
+            ]
+        },
+
+        {
+            "name": "CompressAI Decode 3D",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "decode",
+                "/mnt/eternus/users/Jan/code/data_3D/labelfree3D/FBL/7624_IM_encoded", 
+                "-o", "/mnt/eternus/users/Jan/code/data_3D/labelfree3D/FBL/7624_IM_decoded.tiff",
+                "--checkpoint", "/mnt/eternus/users/Jan/data/compressai/checkpoint_best_loss.pth.tar",
+                "--cuda", 
+            ]
+        }
+    ]
+}

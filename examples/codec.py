@@ -296,7 +296,9 @@ def encode_image(input, codec: CodecInfo, output):
 
     h, w = x.size(2), x.size(3)
     p = 64  # maximum 6 strides of 2
+    print(x.shape)
     x = pad(x, p)
+    print(x.shape)
 
     with torch.no_grad():
         out = codec.net.compress(x)
