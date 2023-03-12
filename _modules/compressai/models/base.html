@@ -1,0 +1,468 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>compressai.models.base &#8212; CompressAI</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=12da95d707ffb74b382d" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=12da95d707ffb74b382d" />
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/compressai/models/base';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../../_static/logo.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/tutorial_train.html">Training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/tutorial_custom.html">Custom model</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Library API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../compressai.html">compressai</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../ans.html">compressai.ans</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../datasets.html">compressai.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../entropy_models.html">compressai.entropy_models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../layers.html">compressai.layers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">compressai.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../ops.html">compressai.ops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../transforms.html">compressai.transforms</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Model Zoo</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../zoo.html">Image compression</a></li>
+
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Utils</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../cli_usage.html">Command line usage</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://github.com/InterDigitalInc/CompressAI/">Github repository</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/InterDigitalInc/CompressAI" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <h1>Source code for compressai.models.base</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021-2022, InterDigital Communications, Inc</span>
+<span class="c1"># All rights reserved.</span>
+
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted (subject to the limitations in the disclaimer</span>
+<span class="c1"># below) provided that the following conditions are met:</span>
+
+<span class="c1"># * Redistributions of source code must retain the above copyright notice,</span>
+<span class="c1">#   this list of conditions and the following disclaimer.</span>
+<span class="c1"># * Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="c1">#   this list of conditions and the following disclaimer in the documentation</span>
+<span class="c1">#   and/or other materials provided with the distribution.</span>
+<span class="c1"># * Neither the name of InterDigital Communications, Inc nor the names of its</span>
+<span class="c1">#   contributors may be used to endorse or promote products derived from this</span>
+<span class="c1">#   software without specific prior written permission.</span>
+
+<span class="c1"># NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY&#39;S PATENT RIGHTS ARE GRANTED BY</span>
+<span class="c1"># THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND</span>
+<span class="c1"># CONTRIBUTORS &quot;AS IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT</span>
+<span class="c1"># NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A</span>
+<span class="c1"># PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR</span>
+<span class="c1"># CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,</span>
+<span class="c1"># EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,</span>
+<span class="c1"># PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;</span>
+<span class="c1"># OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,</span>
+<span class="c1"># WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR</span>
+<span class="c1"># OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF</span>
+<span class="c1"># ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="kn">import</span> <span class="nn">math</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">cast</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+
+<span class="kn">from</span> <span class="nn">compressai.entropy_models</span> <span class="kn">import</span> <span class="n">EntropyBottleneck</span><span class="p">,</span> <span class="n">GaussianConditional</span>
+<span class="kn">from</span> <span class="nn">compressai.models.utils</span> <span class="kn">import</span> <span class="n">update_registered_buffers</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;CompressionModel&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_scale_table&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SCALES_MIN&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SCALES_MAX&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SCALES_LEVELS&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="c1"># From Balle&#39;s tensorflow compression examples</span>
+<span class="n">SCALES_MIN</span> <span class="o">=</span> <span class="mf">0.11</span>
+<span class="n">SCALES_MAX</span> <span class="o">=</span> <span class="mi">256</span>
+<span class="n">SCALES_LEVELS</span> <span class="o">=</span> <span class="mi">64</span>
+
+
+<span class="k">def</span> <span class="nf">get_scale_table</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="n">SCALES_MIN</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">SCALES_MAX</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="n">SCALES_LEVELS</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns table of logarithmically scales.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="nb">min</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="nb">max</span><span class="p">),</span> <span class="n">levels</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="CompressionModel"><a class="viewcode-back" href="../../../models.html#compressai.models.CompressionModel">[docs]</a><span class="k">class</span> <span class="nc">CompressionModel</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for constructing an auto-encoder with any number of</span>
+<span class="sd">    EntropyBottleneck or GaussianConditional modules.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CompressionModel.load_state_dict"><a class="viewcode-back" href="../../../models.html#compressai.models.CompressionModel.load_state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">named_modules</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">EntropyBottleneck</span><span class="p">):</span>
+                <span class="n">update_registered_buffers</span><span class="p">(</span>
+                    <span class="n">module</span><span class="p">,</span>
+                    <span class="n">name</span><span class="p">,</span>
+                    <span class="p">[</span><span class="s2">&quot;_quantized_cdf&quot;</span><span class="p">,</span> <span class="s2">&quot;_offset&quot;</span><span class="p">,</span> <span class="s2">&quot;_cdf_length&quot;</span><span class="p">],</span>
+                    <span class="n">state_dict</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">GaussianConditional</span><span class="p">):</span>
+                <span class="n">update_registered_buffers</span><span class="p">(</span>
+                    <span class="n">module</span><span class="p">,</span>
+                    <span class="n">name</span><span class="p">,</span>
+                    <span class="p">[</span><span class="s2">&quot;_quantized_cdf&quot;</span><span class="p">,</span> <span class="s2">&quot;_offset&quot;</span><span class="p">,</span> <span class="s2">&quot;_cdf_length&quot;</span><span class="p">,</span> <span class="s2">&quot;scale_table&quot;</span><span class="p">],</span>
+                    <span class="n">state_dict</span><span class="p">,</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CompressionModel.update"><a class="viewcode-back" href="../../../models.html#compressai.models.CompressionModel.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scale_table</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Updates EntropyBottleneck and GaussianConditional CDFs.</span>
+
+<span class="sd">        Needs to be called once after training to be able to later perform the</span>
+<span class="sd">        evaluation with an actual entropy coder.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            scale_table (torch.Tensor): table of scales (i.e. stdev)</span>
+<span class="sd">                for initializing the Gaussian distributions</span>
+<span class="sd">                (default: 64 logarithmically spaced scales from 0.11 to 256)</span>
+<span class="sd">            force (bool): overwrite previous values (default: False)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            updated (bool): True if at least one of the modules was updated.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">scale_table</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">scale_table</span> <span class="o">=</span> <span class="n">get_scale_table</span><span class="p">()</span>
+        <span class="n">updated</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">named_modules</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">EntropyBottleneck</span><span class="p">):</span>
+                <span class="n">updated</span> <span class="o">|=</span> <span class="n">module</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">GaussianConditional</span><span class="p">):</span>
+                <span class="n">updated</span> <span class="o">|=</span> <span class="n">module</span><span class="o">.</span><span class="n">update_scale_table</span><span class="p">(</span><span class="n">scale_table</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">updated</span></div>
+
+<div class="viewcode-block" id="CompressionModel.aux_loss"><a class="viewcode-back" href="../../../models.html#compressai.models.CompressionModel.aux_loss">[docs]</a>    <span class="k">def</span> <span class="nf">aux_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Returns the total auxiliary loss over all ``EntropyBottleneck``\s.</span>
+
+<span class="sd">        In contrast to the primary &quot;net&quot; loss used by the &quot;net&quot;</span>
+<span class="sd">        optimizer, the &quot;aux&quot; loss is only used by the &quot;aux&quot; optimizer to</span>
+<span class="sd">        update *only* the ``EntropyBottleneck.quantiles`` parameters. In</span>
+<span class="sd">        fact, the &quot;aux&quot; loss does not depend on image data at all.</span>
+
+<span class="sd">        The purpose of the &quot;aux&quot; loss is to determine the range within</span>
+<span class="sd">        which most of the mass of a given distribution is contained, as</span>
+<span class="sd">        well as its median (i.e. 50% probability). That is, for a given</span>
+<span class="sd">        distribution, the &quot;aux&quot; loss converges towards satisfying the</span>
+<span class="sd">        following conditions for some chosen ``tail_mass`` probability:</span>
+
+<span class="sd">        * ``cdf(quantiles[0]) = tail_mass / 2``</span>
+<span class="sd">        * ``cdf(quantiles[1]) = 0.5``</span>
+<span class="sd">        * ``cdf(quantiles[2]) = 1 - tail_mass / 2``</span>
+
+<span class="sd">        This ensures that the concrete ``_quantized_cdf``\s operate</span>
+<span class="sd">        primarily within a finitely supported region. Any symbols</span>
+<span class="sd">        outside this range must be coded using some alternative method</span>
+<span class="sd">        that does *not* involve the ``_quantized_cdf``\s. Luckily, one</span>
+<span class="sd">        may choose a ``tail_mass`` probability that is sufficiently</span>
+<span class="sd">        small so that this rarely occurs. It is important that we work</span>
+<span class="sd">        with ``_quantized_cdf``\s that have a small finite support;</span>
+<span class="sd">        otherwise, entropy coding runtime performance would suffer.</span>
+<span class="sd">        Thus, ``tail_mass`` should not be too small, either!</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">loss</span><span class="p">()</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">EntropyBottleneck</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span></div></div>
+</pre></div>
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  <!-- Previous / next buttons -->
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            <div class="bd-footer-content__inner">
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By InterDigital Communications, Inc.
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2021, InterDigital Communications, Inc.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div></div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=12da95d707ffb74b382d"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=12da95d707ffb74b382d"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
