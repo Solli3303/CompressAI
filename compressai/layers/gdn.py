@@ -75,12 +75,13 @@ class GDN(nn.Module):
         self.gamma = nn.Parameter(gamma)
 
     def forward(self, x: Tensor) -> Tensor:
-        _, C, _, _ = x.size()
+        _, C, _, _, _ = x.size()
 
         beta = self.beta_reparam(self.beta)
         gamma = self.gamma_reparam(self.gamma)
-        gamma = gamma.reshape(C, C, 1, 1)
-        norm = F.conv2d(x**2, gamma, beta)
+        gamma = gamma.reshape(C, C, 1, 1, 1) 
+        norm = F.conv3d(x**2, gamma, beta)
+
 
         if self.inverse:
             norm = torch.sqrt(norm)
@@ -106,12 +107,12 @@ class GDN1(GDN):
     """
 
     def forward(self, x: Tensor) -> Tensor:
-        _, C, _, _ = x.size()
+        _, C, _, _, _ = x.size()
 
         beta = self.beta_reparam(self.beta)
         gamma = self.gamma_reparam(self.gamma)
-        gamma = gamma.reshape(C, C, 1, 1)
-        norm = F.conv2d(torch.abs(x), gamma, beta)
+        gamma = gamma.reshape(C, C, 1, 1, 1)
+        norm = F.conv3d(torch.abs(x), gamma, beta)
 
         if not self.inverse:
             norm = 1.0 / norm
