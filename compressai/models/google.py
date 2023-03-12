@@ -245,7 +245,7 @@ class ScaleHyperprior(CompressionModel):
         self.entropy_bottleneck = EntropyBottleneck(N)
 
         self.g_a = nn.Sequential(
-            conv(3, N),
+            conv(1, N),
             GDN(N),
             conv(N, N),
             GDN(N),
@@ -261,7 +261,7 @@ class ScaleHyperprior(CompressionModel):
             GDN(N, inverse=True),
             deconv(N, N),
             GDN(N, inverse=True),
-            deconv(N, 3),
+            deconv(N, 1),
         )
 
         self.h_a = nn.Sequential(
@@ -316,12 +316,12 @@ class ScaleHyperprior(CompressionModel):
         z = self.h_a(torch.abs(y))
 
         z_strings = self.entropy_bottleneck.compress(z)
-        z_hat = self.entropy_bottleneck.decompress(z_strings, z.size()[-2:])
+        z_hat = self.entropy_bottleneck.decompress(z_strings, z.size()[-3:])
 
         scales_hat = self.h_s(z_hat)
         indexes = self.gaussian_conditional.build_indexes(scales_hat)
         y_strings = self.gaussian_conditional.compress(y, indexes)
-        return {"strings": [y_strings, z_strings], "shape": z.size()[-2:]}
+        return {"strings": [y_strings, z_strings], "shape": z.size()[-3:]}
 
     def decompress(self, strings, shape):
         assert isinstance(strings, list) and len(strings) == 2
