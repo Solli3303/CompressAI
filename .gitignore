@@ -141,4 +141,4 @@ dmypy.json
 # PyCharm
 .idea/
 runs/
-*.tar
+*.pth.tar
