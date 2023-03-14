@@ -47,6 +47,8 @@ from compressai.zoo import image_models
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning, module="ome_types._convenience")
 
+from torch.utils.tensorboard import SummaryWriter
+writer = SummaryWriter()
 
 class AverageMeter:
     """Compute running average."""
@@ -100,6 +102,12 @@ def train_one_epoch(
         out_net = model(d)
 
         out_criterion = criterion(out_net, d)
+
+        # Write losses to TensorBoard
+        writer.add_scalar('Loss/mse_loss', out_criterion["mse_loss"], global_step=epoch)
+        writer.add_scalar('Loss/bpp_loss', out_criterion["bpp_loss"], global_step=epoch)
+        writer.add_scalar('Loss/total_loss', out_criterion["loss"], global_step=epoch)
+
         out_criterion["loss"].backward()
         if clip_max_norm > 0:
             torch.nn.utils.clip_grad_norm_(model.parameters(), clip_max_norm)
