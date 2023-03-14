@@ -34,6 +34,8 @@ from torch.utils.data import Dataset
 
 from compressai.registry import register_dataset
 
+from aicsimageio import AICSImage
+import numpy as np
 
 @register_dataset("ImageFolder")
 class ImageFolder(Dataset):
@@ -73,12 +75,21 @@ class ImageFolder(Dataset):
             index (int): Index
 
         Returns:
-            img: `PIL.Image.Image` or transformed `PIL.Image.Image`.
+            img: `torch.Tensor` or transformed `torch.Tensor`.
         """
-        img = Image.open(self.samples[index]).convert("RGB")
+        # Load the uint16 image and extraxt 2D array
+        img = AICSImage(self.samples[index]).get_image_data("YX") 
+        # Convert to float32 to fit model
+        img = img.astype(np.float32)
+        # Rescale unint16 values to [0,1]
+        img = img / 65535
+        # Expand dimension
+        img = np.expand_dims(img, axis=0)
+        # Apply optional transformations
         if self.transform:
-            return self.transform(img)
-        return img
+            img= self.transform(img)
+        # Clamp values to [0,1] before handing to model
+        return img.clamp_(0, 1)
 
     def __len__(self):
         return len(self.samples)
