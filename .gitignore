@@ -141,9 +141,7 @@ dmypy.json
 # PyCharm
 .idea/
 .vscode/launch.json
-runs/Mar14_16-04-41_ambiomnode3/events.out.tfevents.1678806281.ambiomnode3.613984.0
-runs/Mar14_16-19-50_ambiomnode3/events.out.tfevents.1678807190.ambiomnode3.1676105.0
-runs/Mar14_16-23-50_ambiomnode3/events.out.tfevents.1678807430.ambiomnode3.1819938.0
-runs/Mar14_16-27-28_ambiomnode3/events.out.tfevents.1678807648.ambiomnode3.2137091.0
+runs/
 checkpoint_best_loss.pth.tar
 checkpoint.pth.tar
+runs/Mar14_18-09-58_ambiomnode3/events.out.tfevents.1678813798.ambiomnode3.421255.0
