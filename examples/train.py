@@ -44,6 +44,9 @@ from compressai.losses import RateDistortionLoss
 from compressai.optimizers import net_aux_optimizer
 from compressai.zoo import image_models
 
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning, module="ome_types._convenience")
+
 
 class AverageMeter:
     """Compute running average."""
@@ -241,11 +244,11 @@ def main(argv):
         random.seed(args.seed)
 
     train_transforms = transforms.Compose(
-        [transforms.RandomCrop(args.patch_size), transforms.ToTensor()]
+        [transforms.RandomCrop(args.patch_size)]#, transforms.ToTensor()]
     )
 
     test_transforms = transforms.Compose(
-        [transforms.CenterCrop(args.patch_size), transforms.ToTensor()]
+        [transforms.CenterCrop(args.patch_size)]#, transforms.ToTensor()]
     )
 
     train_dataset = ImageFolder(args.dataset, split="train", transform=train_transforms)

@@ -36,6 +36,7 @@ from compressai.registry import register_dataset
 
 from aicsimageio import AICSImage
 import numpy as np
+import torch
 
 @register_dataset("ImageFolder")
 class ImageFolder(Dataset):
@@ -83,13 +84,13 @@ class ImageFolder(Dataset):
         img = img.astype(np.float32)
         # Rescale unint16 values to [0,1]
         img = img / 65535
-        # Expand dimension
-        img = np.expand_dims(img, axis=0)
+        img = torch.tensor(img).unsqueeze(0)
         # Apply optional transformations
         if self.transform:
             img= self.transform(img)
         # Clamp values to [0,1] before handing to model
-        return img.clamp_(0, 1)
+        img = img.clamp_(0, 1)
+        return img
 
     def __len__(self):
         return len(self.samples)
