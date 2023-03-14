@@ -102,12 +102,6 @@ def train_one_epoch(
         out_net = model(d)
 
         out_criterion = criterion(out_net, d)
-
-        # Write losses to TensorBoard
-        writer.add_scalar('Loss/mse_loss', out_criterion["mse_loss"], global_step=epoch)
-        writer.add_scalar('Loss/bpp_loss', out_criterion["bpp_loss"], global_step=epoch)
-        writer.add_scalar('Loss/total_loss', out_criterion["loss"], global_step=epoch)
-
         out_criterion["loss"].backward()
         if clip_max_norm > 0:
             torch.nn.utils.clip_grad_norm_(model.parameters(), clip_max_norm)
@@ -116,6 +110,12 @@ def train_one_epoch(
         aux_loss = model.aux_loss()
         aux_loss.backward()
         aux_optimizer.step()
+
+        # Write losses to TensorBoard
+        writer.add_scalar('Loss/mse_loss', out_criterion["mse_loss"].item(), global_step=epoch)
+        writer.add_scalar('Loss/bpp_loss', out_criterion["bpp_loss"].item(), global_step=epoch)
+        writer.add_scalar('Loss/total_loss', out_criterion["loss"].item(), global_step=epoch)
+        writer.add_scalar('Loss/aux_loss', aux_loss.item(), global_step=epoch)
 
         if i % 10 == 0:
             print(
