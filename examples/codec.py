@@ -371,7 +371,7 @@ def encode_video(input, codec: CodecInfo, output):
     return {"bpp": bpp, "avg_frm_enc_time": np.mean(avg_frame_enc_time)}
 
 
-def _encode(input, num_of_frames, model, metric, quality, coder, device, output, checkpoint_path):
+def _encode(input, num_of_frames, coder, device, output, checkpoint_path):
     encode_func = {
         CodecType.IMAGE_CODEC: encode_image,
         CodecType.VIDEO_CODEC: encode_video,
@@ -393,10 +393,10 @@ def _encode(input, num_of_frames, model, metric, quality, coder, device, output,
     net.update()
 
     codec_type = (
-        CodecType.IMAGE_CODEC if model in image_models else CodecType.VIDEO_CODEC
+        CodecType.IMAGE_CODEC if checkpoint['model'] in image_models else CodecType.VIDEO_CODEC
     )
 
-    codec_header_info = get_header(model, metric, quality, num_of_frames, codec_type)
+    codec_header_info = get_header(checkpoint['model'], 'mse', checkpoint['quality'], num_of_frames, codec_type)
     load_time = time.time() - start
 
     if not Path(input).is_file():
@@ -477,7 +477,7 @@ def decode_video(f, codec: CodecInfo, output):
     return {"img": img, "avg_frm_dec_time": np.mean(avg_frame_dec_time)}
 
 
-def _decode(inputpath, coder, show, device, checkpoint_path, output=None,):
+def _decode(inputpath, coder, device, checkpoint_path, output=None,):
     decode_func = {
         CodecType.IMAGE_CODEC: decode_image,
         CodecType.VIDEO_CODEC: decode_video,
@@ -518,9 +518,6 @@ def _decode(inputpath, coder, show, device, checkpoint_path, output=None,):
     dec_time = time.time() - dec_start
     print(f"Decoded in {dec_time:.2f}s (model loading: {load_time:.2f}s)")
 
-    if show:
-        # For video, only the last frame is shown
-        show_image(out["img"])
 
 
 def show_image(img: Image.Image):
@@ -548,27 +545,6 @@ def encode(argv):
         type=int,
         help="Number of frames to be coded. -1 will encode all frames of input (default: %(default)s)",
     )
-    # parser.add_argument(
-    #     "--model",
-    #     choices=models.keys(),
-    #     default=list(models.keys())[0],
-    #     help="NN model to use (default: %(default)s)",
-    # )
-    # parser.add_argument(
-    #     "-m",
-    #     "--metric",
-    #     choices=metric_ids.keys(),
-    #     default="mse",
-    #     help="metric trained against (default: %(default)s)",
-    # )
-    # parser.add_argument(
-    #     "-q",
-    #     "--quality",
-    #     choices=list(range(1, 9)),
-    #     type=int,
-    #     default=3,
-    #     help="Quality setting (default: %(default)s)",
-    # )
     parser.add_argument(
         "-c",
         "--coder",
@@ -587,9 +563,6 @@ def encode(argv):
     _encode(
         args.input,
         args.num_of_frames,
-        args.model,
-        args.metric,
-        args.quality,
         args.coder,
         device,
         args.output,
@@ -613,7 +586,7 @@ def decode(argv):
     parser.add_argument("--cuda", action="store_true", help="Use cuda")
     args = parser.parse_args(argv)
     device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
-    _decode(args.input, args.coder, args.show, device, args.checkpoint, args.output)
+    _decode(args.input, args.coder, device, args.checkpoint, args.output)
 
 
 def parse_args(argv):
