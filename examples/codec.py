@@ -396,7 +396,7 @@ def _encode(input, num_of_frames, coder, device, output, checkpoint_path):
         CodecType.IMAGE_CODEC if checkpoint['model'] in image_models else CodecType.VIDEO_CODEC
     )
 
-    codec_header_info = get_header(checkpoint['model'], 'mse', checkpoint['quality'], num_of_frames, codec_type)
+    codec_header_info = get_header(checkpoint['model'], checkpoint['metric'], checkpoint['quality'], num_of_frames, codec_type)
     load_time = time.time() - start
 
     if not Path(input).is_file():
@@ -510,7 +510,7 @@ def _decode(inputpath, coder, device, checkpoint_path, output=None,):
         )
 
         load_time = time.time() - start
-        print(f"Model: {checkpoint['model']:s}, metric: {'mse':s}, quality: {checkpoint['quality']:d}")
+        print(f"Model: {checkpoint['model']:s}, metric: {checkpoint['metric']:s}, quality: {checkpoint['quality']:d}")
 
         stream_info = CodecInfo(None, original_size, original_bitdepth, net, device)
         out = decode_func[codec_type](f, stream_info, output)
