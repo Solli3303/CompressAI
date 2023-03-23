@@ -92,8 +92,9 @@ def train_one_epoch(
 ):
     model.train()
     device = next(model.parameters()).device
-    metric = criterion.metric.__name__
-
+    metric = 'mse' if str(criterion.metric) == 'MSELoss()' else 'ms_ssim' 
+    #metric = str(criterion.metric) #TODO improvement of names
+   
     for i, d in enumerate(train_dataloader):
         d = d.to(device)
 
@@ -134,7 +135,7 @@ def test_epoch(epoch, test_dataloader, model, criterion):
     model.eval()
     device = next(model.parameters()).device
 
-    metric = criterion.metric.__name__
+    metric = 'mse' if str(criterion.metric) == 'MSELoss()' else 'ms_ssim' 
 
     loss = AverageMeter()
     bpp_loss = AverageMeter()
