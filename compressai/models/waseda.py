@@ -60,7 +60,7 @@ class Cheng2020Anchor(JointAutoregressiveHierarchicalPriors):
         super().__init__(N=N, M=N, **kwargs)
 
         self.g_a = nn.Sequential(
-            ResidualBlockWithStride(3, N, stride=2),
+            ResidualBlockWithStride(1, N, stride=2),
             ResidualBlock(N, N),
             ResidualBlockWithStride(N, N, stride=2),
             ResidualBlock(N, N),
@@ -101,7 +101,7 @@ class Cheng2020Anchor(JointAutoregressiveHierarchicalPriors):
             ResidualBlock(N, N),
             ResidualBlockUpsample(N, N, 2),
             ResidualBlock(N, N),
-            subpel_conv3x3(N, 3, 2),
+            subpel_conv3x3(N, 1, 2),
         )
 
     @classmethod
@@ -131,7 +131,7 @@ class Cheng2020Attention(Cheng2020Anchor):
         super().__init__(N=N, **kwargs)
 
         self.g_a = nn.Sequential(
-            ResidualBlockWithStride(3, N, stride=2),
+            ResidualBlockWithStride(1, N, stride=2),
             ResidualBlock(N, N),
             ResidualBlockWithStride(N, N, stride=2),
             AttentionBlock(N),
@@ -152,5 +152,5 @@ class Cheng2020Attention(Cheng2020Anchor):
             ResidualBlock(N, N),
             ResidualBlockUpsample(N, N, 2),
             ResidualBlock(N, N),
-            subpel_conv3x3(N, 3, 2),
+            subpel_conv3x3(N, 1, 2),
         )
