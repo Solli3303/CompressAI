@@ -57,6 +57,9 @@ from compressai.transforms.functional import (
 )
 from compressai.zoo import image_models, models
 
+from aicsimageio import AICSImage
+from aicsimageio.writers import  OmeTiffWriter
+
 torch.backends.cudnn.deterministic = True
 
 model_ids = {k: i for i, k in enumerate(models.keys())}
@@ -102,15 +105,29 @@ def filesize(filepath: str) -> int:
 
 
 def load_image(filepath: str) -> Image.Image:
-    return Image.open(filepath).convert("RGB")
+    # Load the uint16 image and extraxt 2D array    
+    img = AICSImage(filepath).get_image_data("YX")    
+    # Convert to float32 to fit model    
+    img = img.astype(np.float32)    
+    # Rescale unint16 values to [0,1]       
+    img = img / 65535
+    # Create pseudo RGB
+    img = np.stack((img,)*3, axis=-1)
+    return img
 
 
 def img2torch(img: Image.Image) -> torch.Tensor:
     return ToTensor()(img).unsqueeze(0)
 
 
-def torch2img(x: torch.Tensor) -> Image.Image:
-    return ToPILImage()(x.clamp_(0, 1).squeeze())
+def torch2img(x: torch.Tensor):
+    return (x.clamp_(0, 1).squeeze())
+
+
+def tensor_to_array(x: torch.Tensor): 
+    # Convert  tensor to numpy array and rescale to uint16
+    np_array = x.clamp_(0, 1).squeeze().cpu().numpy()
+    return (np_array * (2**16 - 1)).astype(np.uint16)
 
 
 def write_uints(fd, values, fmt=">{:d}I"):
@@ -264,7 +281,7 @@ def encode_image(input, codec: CodecInfo, output):
     else:
         img = load_image(input)
         x = img2torch(img).to(codec.device)
-        bitdepth = 8
+        bitdepth = 32
 
     h, w = x.size(2), x.size(3)
     p = 64  # maximum 6 strides of 2
@@ -395,7 +412,7 @@ def decode_image(f, codec: CodecInfo, output):
 
     x_hat = crop(out["x_hat"], codec.original_size)
 
-    img = torch2img(x_hat)
+    img = tensor_to_array(x_hat)
 
     if output is not None:
         if Path(output).suffix == ".yuv":
@@ -403,7 +420,7 @@ def decode_image(f, codec: CodecInfo, output):
             with Path(output).open("wb") as fout:
                 write_frame(fout, rec, codec.original_bitdepth)
         else:
-            img.save(output)
+            OmeTiffWriter.save(img[0], output, dim_order="YX")
 
     return {"img": img}
 
