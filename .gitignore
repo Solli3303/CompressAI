@@ -2,12 +2,15 @@
 *.inc
 *.sh
 *.tar.gz
+*.png
+*.ckpt
 .DS_Store
 builds
 compressai/version.py
 tags
 venv*/
 venv/
+examples/data/
 
 # Created by gitignore.io
 ### Python ###
@@ -145,3 +148,7 @@ runs/
 checkpoint_best_loss.pth.tar
 checkpoint.pth.tar
 runs/Mar14_18-09-58_ambiomnode3/events.out.tfevents.1678813798.ambiomnode3.421255.0
+examples/im2im/2D/lightning_logs/*
+
+*.csv
+examples/temp.tiff
