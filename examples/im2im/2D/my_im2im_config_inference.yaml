@@ -1,0 +1,44 @@
+mode: inference
+
+data:
+  inference_input:
+    reader_params:
+      dimension_order_out: "YX"
+      C: 0
+      T: 0
+
+  preprocess:     
+    - module_name: monai.transforms
+      func_name: NormalizeIntensity
+
+model:
+  framework: pix2pix
+  net:
+    generator:
+      module_name: mmv_im2im.models.nets.fnet_nn_2d
+      func_name: Net
+      params:
+        depth: 4
+        mult_chan: 32
+    discriminator:
+      type: predefined_multiscale
+      params:
+        num_discriminator: 2
+        spatial_dims: 2
+        in_channels: 2
+        n_layers: 3
+        nf: 64
+        norm_layer: "INSTANCE"
+  model_extra:
+    sliding_window_params:
+      roi_size: [128, 128]
+      sw_batch_size: 4
+      overlap: 0.2
+      mode: "gaussian"
+  checkpoint: "/mnt/eternus/users/Jan/code/train_best.ckpt"   #ADD-YOURS
+
+trainer:
+  params:
+    gpus: 1
+    precision: 16
+
