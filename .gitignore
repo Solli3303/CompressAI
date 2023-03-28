@@ -4,6 +4,7 @@
 *.tar.gz
 *.png
 *.ckpt
+*.pth.tar
 .DS_Store
 builds
 compressai/version.py
@@ -11,7 +12,7 @@ tags
 venv*/
 venv/
 examples/data/
-
+runs/ 
 # Created by gitignore.io
 ### Python ###
 # Byte-compiled / optimized / DLL files
