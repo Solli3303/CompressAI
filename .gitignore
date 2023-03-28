@@ -4,6 +4,7 @@
 *.tar.gz
 *.png
 *.ckpt
+*.pth.tar
 .DS_Store
 builds
 compressai/version.py
