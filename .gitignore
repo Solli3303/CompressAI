@@ -2,12 +2,17 @@
 *.inc
 *.sh
 *.tar.gz
+*.png
+*.ckpt
+*pth.tar
 .DS_Store
 builds
 compressai/version.py
 tags
 venv*/
 venv/
+examples/data/
+runs/
 
 # Created by gitignore.io
 ### Python ###
@@ -140,3 +145,8 @@ dmypy.json
 
 # PyCharm
 .idea/
+.vscode/launch.json
+examples/im2im/2D/lightning_logs/*
+
+*.csv
+examples/temp.tiff
