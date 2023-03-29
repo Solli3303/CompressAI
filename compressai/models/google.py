@@ -104,7 +104,7 @@ class FactorizedPrior(CompressionModel):
         self.entropy_bottleneck = EntropyBottleneck(M)
 
         self.g_a = nn.Sequential(
-            conv(3, N),
+            conv(1, N),
             GDN(N),
             conv(N, N),
             GDN(N),
@@ -120,7 +120,7 @@ class FactorizedPrior(CompressionModel):
             GDN(N, inverse=True),
             deconv(N, N),
             GDN(N, inverse=True),
-            deconv(N, 3),
+            deconv(N, 1),
         )
 
         self.N = N
@@ -181,7 +181,7 @@ class FactorizedPriorReLU(FactorizedPrior):
         super().__init__(N=N, M=M, **kwargs)
 
         self.g_a = nn.Sequential(
-            conv(3, N),
+            conv(1, N),
             nn.ReLU(inplace=True),
             conv(N, N),
             nn.ReLU(inplace=True),
@@ -197,7 +197,7 @@ class FactorizedPriorReLU(FactorizedPrior):
             nn.ReLU(inplace=True),
             deconv(N, N),
             nn.ReLU(inplace=True),
-            deconv(N, 3),
+            deconv(N, 1),
         )
 
 
@@ -476,7 +476,7 @@ class JointAutoregressiveHierarchicalPriors(MeanScaleHyperprior):
         super().__init__(N=N, M=M, **kwargs)
 
         self.g_a = nn.Sequential(
-            conv(3, N, kernel_size=5, stride=2),
+            conv(1, N, kernel_size=5, stride=2),
             GDN(N),
             conv(N, N, kernel_size=5, stride=2),
             GDN(N),
@@ -492,7 +492,7 @@ class JointAutoregressiveHierarchicalPriors(MeanScaleHyperprior):
             GDN(N, inverse=True),
             deconv(N, N, kernel_size=5, stride=2),
             GDN(N, inverse=True),
-            deconv(N, 3, kernel_size=5, stride=2),
+            deconv(N, 1, kernel_size=5, stride=2),
         )
 
         self.h_a = nn.Sequential(
