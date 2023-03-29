@@ -44,6 +44,19 @@ from compressai.losses import RateDistortionLoss
 from compressai.optimizers import net_aux_optimizer
 from compressai.zoo import image_models
 
+from monai.transforms import RandSpatialCrop
+import monai.transforms as transforms
+
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning, module="ome_types._convenience")
+
+from torch.utils.tensorboard import SummaryWriter
+writer = SummaryWriter()
+
+class MetaToTensor(transforms.Transform):
+    def __call__(self, data):
+        # transforming monai meta tensor to pytorch tensor
+        return data.as_tensor()#.unsqueeze(0)
 
 class AverageMeter:
     """Compute running average."""
@@ -87,6 +100,7 @@ def train_one_epoch(
 ):
     model.train()
     device = next(model.parameters()).device
+    metric = 'mse' if str(criterion.metric) == 'MSELoss()' else 'ms_ssim' 
 
     for i, d in enumerate(train_dataloader):
         d = d.to(device)
@@ -106,12 +120,19 @@ def train_one_epoch(
         aux_loss.backward()
         aux_optimizer.step()
 
+         # Write losses to TensorBoard
+        writer.add_scalar(f'Loss/{metric}_loss', out_criterion[f"{metric}_loss"].item(), global_step=epoch)
+        writer.add_scalar('Loss/bpp_loss', out_criterion["bpp_loss"].item(), global_step=epoch)
+        writer.add_scalar('Loss/total_loss', out_criterion["loss"].item(), global_step=epoch)
+        writer.add_scalar('Loss/aux_loss', aux_loss.item(), global_step=epoch)
+
+
         if i % 10 == 0:
             print(
                 f"Train epoch {epoch}: ["
                 f"{i*len(d)}/{len(train_dataloader.dataset)}"
                 f" ({100. * i / len(train_dataloader):.0f}%)]"
-                f'\tLoss: {out_criterion["loss"].item():.3f} |'
+                f'\t{metric} loss: {out_criterion[f"{metric}_loss"].item():.3f} |'
                 f'\tMSE loss: {out_criterion["mse_loss"].item():.3f} |'
                 f'\tBpp loss: {out_criterion["bpp_loss"].item():.2f} |'
                 f"\tAux loss: {aux_loss.item():.2f}"
@@ -121,10 +142,11 @@ def train_one_epoch(
 def test_epoch(epoch, test_dataloader, model, criterion):
     model.eval()
     device = next(model.parameters()).device
-
+    metric = 'mse' if str(criterion.metric) == 'MSELoss()' else 'ms_ssim' 
+    
     loss = AverageMeter()
     bpp_loss = AverageMeter()
-    mse_loss = AverageMeter()
+    metric_loss = AverageMeter()
     aux_loss = AverageMeter()
 
     with torch.no_grad():
@@ -136,12 +158,12 @@ def test_epoch(epoch, test_dataloader, model, criterion):
             aux_loss.update(model.aux_loss())
             bpp_loss.update(out_criterion["bpp_loss"])
             loss.update(out_criterion["loss"])
-            mse_loss.update(out_criterion["mse_loss"])
+            metric_loss.update(out_criterion[f"{metric}_loss"])
 
     print(
         f"Test epoch {epoch}: Average losses:"
         f"\tLoss: {loss.avg:.3f} |"
-        f"\tMSE loss: {mse_loss.avg:.3f} |"
+        f"\t{metric} loss: {metric_loss.avg:.3f} |"
         f"\tBpp loss: {bpp_loss.avg:.2f} |"
         f"\tAux loss: {aux_loss.avg:.2f}\n"
     )
@@ -149,10 +171,10 @@ def test_epoch(epoch, test_dataloader, model, criterion):
     return loss.avg
 
 
-def save_checkpoint(state, is_best, filename="checkpoint.pth.tar"):
-    torch.save(state, filename)
+def save_checkpoint(state, is_best, path='checkpoint'):
+    torch.save(state, path+".pth.tar")
     if is_best:
-        shutil.copyfile(filename, "checkpoint_best_loss.pth.tar")
+        shutil.copyfile(path+".pth.tar", path+"_best_loss.pth.tar")
 
 
 def parse_args(argv):
@@ -163,6 +185,19 @@ def parse_args(argv):
         default="bmshj2018-factorized",
         choices=image_models.keys(),
         help="Model architecture (default: %(default)s)",
+    )
+    parser.add_argument(
+        "-q",
+        "--quality",
+        default=3,
+        type=int,
+        help="Model quality (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--metric",
+        default='mse',
+        choices=['mse','ms-ssim'],
+        help="Model metric (default: %(default)s)",
     )
     parser.add_argument(
         "-d", "--dataset", type=str, required=True, help="Training dataset"
@@ -228,6 +263,7 @@ def parse_args(argv):
         type=float,
         help="gradient clipping max norm (default: %(default)s",
     )
+    parser.add_argument("-o", "--output", help="Output path")
     parser.add_argument("--checkpoint", type=str, help="Path to a checkpoint")
     args = parser.parse_args(argv)
     return args
@@ -241,11 +277,11 @@ def main(argv):
         random.seed(args.seed)
 
     train_transforms = transforms.Compose(
-        [transforms.RandomCrop(args.patch_size), transforms.ToTensor()]
+        [RandSpatialCrop(roi_size=(64, 128, 128), random_size= False), MetaToTensor()]
     )
 
     test_transforms = transforms.Compose(
-        [transforms.CenterCrop(args.patch_size), transforms.ToTensor()]
+        [RandSpatialCrop(roi_size=(64, 128, 128), random_size= False), MetaToTensor()]
     )
 
     train_dataset = ImageFolder(args.dataset, split="train", transform=train_transforms)
@@ -269,7 +305,7 @@ def main(argv):
         pin_memory=(device == "cuda"),
     )
 
-    net = image_models[args.model](quality=3)
+    net = image_models[args.model](quality=args.quality, pretrained=False)
     net = net.to(device)
 
     if args.cuda and torch.cuda.device_count() > 1:
@@ -277,7 +313,7 @@ def main(argv):
 
     optimizer, aux_optimizer = configure_optimizers(net, args)
     lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min")
-    criterion = RateDistortionLoss(lmbda=args.lmbda)
+    criterion = RateDistortionLoss(lmbda=args.lmbda, metric=args.metric)
 
     last_epoch = 0
     if args.checkpoint:  # load from previous checkpoint
@@ -310,6 +346,9 @@ def main(argv):
         if args.save:
             save_checkpoint(
                 {
+                    "model": args.model,
+                    "quality": args.quality,
+                    "metric": args.metric,
                     "epoch": epoch,
                     "state_dict": net.state_dict(),
                     "loss": loss,
@@ -318,6 +357,7 @@ def main(argv):
                     "lr_scheduler": lr_scheduler.state_dict(),
                 },
                 is_best,
+                args.output
             )
 
 
