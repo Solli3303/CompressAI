@@ -1,5 +1,8 @@
-Copyright (c) 2021-2022, InterDigital Communications, Inc
-All rights reserved.
+BSD-license
+
+Copyright (c) 2023, Leibniz-Institut für Analytische Wissenschaften – ISAS – e.V.
+Part of the code was adapted from https://github.com/InterDigitalInc/CompressAI, 
+under the same BSD-license. 
 
 Redistribution and use in source and binary forms, with or without 
 modification, are permitted (subject to the limitations in the disclaimer 
