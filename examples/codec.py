@@ -57,6 +57,11 @@ from compressai.transforms.functional import (
 )
 from compressai.zoo import image_models, models
 
+from aicsimageio import AICSImage
+from pathlib import Path
+from aicsimageio.writers import OmeTiffWriter
+from monai.inferers import sliding_window_inference
+
 torch.backends.cudnn.deterministic = True
 
 model_ids = {k: i for i, k in enumerate(models.keys())}
@@ -102,15 +107,28 @@ def filesize(filepath: str) -> int:
 
 
 def load_image(filepath: str) -> Image.Image:
-    return Image.open(filepath).convert("RGB")
+    # Load the uint16 image and extract 3D array
+    img = AICSImage(filepath).get_image_data("ZYX") 
+    # Convert to float32 to fit model
+    img = img.astype(np.float32)
+    #Rescale image from uint16 to (0,1)
+    img = img / 65535
+    return img
 
 
-def img2torch(img: Image.Image) -> torch.Tensor:
-    return ToTensor()(img).unsqueeze(0)
+def img2torch(img: torch.Tensor) -> torch.Tensor:
+    # Convert numpy array to tensor 
+    img = torch.tensor(img).unsqueeze(0).unsqueeze(0)
+    # Clamp values to [0,1] before handing to model
+    img = img.clamp_(0, 1)
+    return img
 
 
-def torch2img(x: torch.Tensor) -> Image.Image:
-    return ToPILImage()(x.clamp_(0, 1).squeeze())
+def torch2img(x: torch.Tensor):
+    # Copy to CPU, rescale and change datatype
+    img = (x.clamp_(0, 1).squeeze(0).squeeze(0).cpu().numpy() * 65535).astype(np.uint16)
+    return img
+
 
 
 def write_uints(fd, values, fmt=">{:d}I"):
@@ -225,17 +243,51 @@ def convert_rgb_yuv420(frame: Tensor) -> Tuple[np.ndarray, np.ndarray, np.ndarra
     return yuv_444_to_420(rgb2ycbcr(frame), mode="avg_pool")
 
 
-def pad(x, p=2**6):
-    h, w = x.size(2), x.size(3)
-    pad, _ = compute_padding(h, w, min_div=p)
-    return F.pad(x, pad, mode="constant", value=0)
+# def pad(x, p=2**6):
+#     h, w = x.size(2), x.size(3)
+#     pad, _ = compute_padding(h, w, min_div=p)
+#     return F.pad(x, pad, mode="constant", value=0)
+#
+# def crop(x, size):
+#     H, W = x.size(2), x.size(3)
+#     h, w = size
+#     _, unpad = compute_padding(h, w, out_h=H, out_w=W)
+#     return F.pad(x, unpad, mode="constant", value=0)
 
 
 def crop(x, size):
-    H, W = x.size(2), x.size(3)
-    h, w = size
-    _, unpad = compute_padding(h, w, out_h=H, out_w=W)
-    return F.pad(x, unpad, mode="constant", value=0)
+    D, H, W = x.size(2), x.size(3), x.size(4)
+    d, h, w = size    
+    padding_front = (D - d) // 2
+    padding_back = D - d - padding_front
+    padding_left = (W - w) // 2
+    padding_right = W - w - padding_left
+    padding_top = (H - h) // 2
+    padding_bottom = H - h - padding_top
+    return F.pad(
+        x,
+        (-padding_left, -padding_right, -padding_top, -padding_bottom, -padding_front, -padding_back),
+        mode="constant",
+        value=0,
+    )
+
+def pad(x, p=2**6):
+    d, h, w = x.size(2), x.size(3), x.size(4)
+    H = (h + p - 1) // p * p
+    W = (w + p - 1) // p * p
+    D = (d + p - 1) // p * p    
+    padding_front = (D - d) // 2
+    padding_back = D - d - padding_front
+    padding_left = (W - w) // 2
+    padding_right = W - w - padding_left
+    padding_top = (H - h) // 2
+    padding_bottom = H - h - padding_top
+    return F.pad(
+        x,
+        (padding_left, padding_right, padding_top, padding_bottom, padding_front, padding_back),
+        mode="constant",
+        value=0,
+    )
 
 
 def convert_output(t: Tensor, bitdepth: int = 8) -> np.array:
@@ -264,28 +316,37 @@ def encode_image(input, codec: CodecInfo, output):
     else:
         img = load_image(input)
         x = img2torch(img).to(codec.device)
-        bitdepth = 8
+        bitdepth = 16 #8
 
-    h, w = x.size(2), x.size(3)
+    d, h, w = x.size(2), x.size(3), x.size(4)
     p = 64  # maximum 6 strides of 2
     x = pad(x, p)
 
     with torch.no_grad():
+        # out = sliding_window_inference(
+        #                 inputs=x,
+        #                 predictor= codec.net.compress,
+        #                 device= codec.device,
+        #                 roi_size = (64, 64, 64),
+        #                 sw_batch_size = 4
+        #             )
         out = codec.net.compress(x)
+
+
 
     shape = out["shape"]
 
     with Path(output).open("wb") as f:
         write_uchars(f, codec.codec_header)
         # write original image size
-        write_uints(f, (h, w))
+        write_uints(f, (d, h, w))
         # write original bitdepth
         write_uchars(f, (bitdepth,))
         # write shape and number of encoded latents
         write_body(f, shape, out["strings"])
 
     size = filesize(output)
-    bpp = float(size) * 8 / (h * w)
+    bpp = float(size) * 8 / (d * h * w)
 
     return {"bpp": bpp}
 
@@ -354,8 +415,7 @@ def encode_video(input, codec: CodecInfo, output):
 
     return {"bpp": bpp, "avg_frm_enc_time": np.mean(avg_frame_enc_time)}
 
-
-def _encode(input, num_of_frames, model, metric, quality, coder, device, output):
+def _encode(input, num_of_frames, coder, device, output, checkpoint_path):
     encode_func = {
         CodecType.IMAGE_CODEC: encode_image,
         CodecType.VIDEO_CODEC: encode_video,
@@ -363,15 +423,24 @@ def _encode(input, num_of_frames, model, metric, quality, coder, device, output)
 
     compressai.set_entropy_coder(coder)
     enc_start = time.time()
-
     start = time.time()
-    model_info = models[model]
-    net = model_info(quality=quality, metric=metric, pretrained=True).to(device).eval()
+
+    # load the checkpoint data into a Python dictionary
+    checkpoint = torch.load(checkpoint_path)
+    # access the state dict from the checkpoint dictionary
+    state_dict = checkpoint['state_dict']
+    # remove the "module." prefix from all keys in the state dict
+    state_dict = {k.replace('module.', ''): v for k, v in checkpoint['state_dict'].items()}
+    
+    model_info = models[checkpoint['model']]
+    net = model_info(quality=checkpoint['quality'], pretrained=False).from_state_dict(state_dict).to(device).eval()
+    net.update()
+
     codec_type = (
-        CodecType.IMAGE_CODEC if model in image_models else CodecType.VIDEO_CODEC
+        CodecType.IMAGE_CODEC if checkpoint['model'] in image_models else CodecType.VIDEO_CODEC
     )
 
-    codec_header_info = get_header(model, metric, quality, num_of_frames, codec_type)
+    codec_header_info = get_header(checkpoint['model'], checkpoint['metric'], checkpoint['quality'], num_of_frames, codec_type)
     load_time = time.time() - start
 
     if not Path(input).is_file():
@@ -403,7 +472,7 @@ def decode_image(f, codec: CodecInfo, output):
             with Path(output).open("wb") as fout:
                 write_frame(fout, rec, codec.original_bitdepth)
         else:
-            img.save(output)
+            OmeTiffWriter.save(img, output, dim_order='YX')
 
     return {"img": img}
 
@@ -452,7 +521,7 @@ def decode_video(f, codec: CodecInfo, output):
     return {"img": img, "avg_frm_dec_time": np.mean(avg_frame_dec_time)}
 
 
-def _decode(inputpath, coder, show, device, output=None):
+def _decode(inputpath, coder, device, checkpoint_path, output=None,):
     decode_func = {
         CodecType.IMAGE_CODEC: decode_image,
         CodecType.VIDEO_CODEC: decode_video,
@@ -464,22 +533,28 @@ def _decode(inputpath, coder, show, device, output=None):
     with Path(inputpath).open("rb") as f:
         model, metric, quality = parse_header(read_uchars(f, 2))
 
-        original_size = read_uints(f, 2)
+        original_size = read_uints(f, 3)
         original_bitdepth = read_uchars(f, 1)[0]
 
         start = time.time()
-        model_info = models[model]
-        net = (
-            model_info(quality=quality, metric=metric, pretrained=True)
-            .to(device)
-            .eval()
-        )
+  
+        # load the checkpoint data into a Python dictionary
+        checkpoint = torch.load(checkpoint_path)
+        # access the state dict from the checkpoint dictionary
+        state_dict = checkpoint['state_dict']
+        # remove the "module." prefix from all keys in the state dict
+        state_dict = {k.replace('module.', ''): v for k, v in checkpoint['state_dict'].items()}
+
+        model_info = models[checkpoint['model']]
+        net = model_info(quality=checkpoint['quality'], pretrained=False).from_state_dict(state_dict).to(device).eval()
+        net.update()
+
         codec_type = (
             CodecType.IMAGE_CODEC if model in image_models else CodecType.VIDEO_CODEC
         )
 
         load_time = time.time() - start
-        print(f"Model: {model:s}, metric: {metric:s}, quality: {quality:d}")
+        print(f"Model: {checkpoint['model']:s}, metric: {checkpoint['metric']:s}, quality: {checkpoint['quality']:d}")
 
         stream_info = CodecInfo(None, original_size, original_bitdepth, net, device)
         out = decode_func[codec_type](f, stream_info, output)
@@ -487,9 +562,6 @@ def _decode(inputpath, coder, show, device, output=None):
     dec_time = time.time() - dec_start
     print(f"Decoded in {dec_time:.2f}s (model loading: {load_time:.2f}s)")
 
-    if show:
-        # For video, only the last frame is shown
-        show_image(out["img"])
 
 
 def show_image(img: Image.Image):
@@ -518,27 +590,6 @@ def encode(argv):
         help="Number of frames to be coded. -1 will encode all frames of input (default: %(default)s)",
     )
     parser.add_argument(
-        "--model",
-        choices=models.keys(),
-        default=list(models.keys())[0],
-        help="NN model to use (default: %(default)s)",
-    )
-    parser.add_argument(
-        "-m",
-        "--metric",
-        choices=metric_ids.keys(),
-        default="mse",
-        help="metric trained against (default: %(default)s)",
-    )
-    parser.add_argument(
-        "-q",
-        "--quality",
-        choices=list(range(1, 9)),
-        type=int,
-        default=3,
-        help="Quality setting (default: %(default)s)",
-    )
-    parser.add_argument(
         "-c",
         "--coder",
         choices=compressai.available_entropy_coders(),
@@ -546,6 +597,7 @@ def encode(argv):
         help="Entropy coder (default: %(default)s)",
     )
     parser.add_argument("-o", "--output", help="Output path")
+    parser.add_argument("--checkpoint", help="Model weights")
     parser.add_argument("--cuda", action="store_true", help="Use cuda")
     args = parser.parse_args(argv)
     if not args.output:
@@ -555,12 +607,10 @@ def encode(argv):
     _encode(
         args.input,
         args.num_of_frames,
-        args.model,
-        args.metric,
-        args.quality,
         args.coder,
         device,
         args.output,
+        args.checkpoint
     )
 
 
@@ -574,12 +624,13 @@ def decode(argv):
         default=compressai.available_entropy_coders()[0],
         help="Entropy coder (default: %(default)s)",
     )
-    parser.add_argument("--show", action="store_true")
+    # parser.add_argument("--show", action="store_true")
     parser.add_argument("-o", "--output", help="Output path")
+    parser.add_argument("--checkpoint", help="Model weights")
     parser.add_argument("--cuda", action="store_true", help="Use cuda")
     args = parser.parse_args(argv)
     device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
-    _decode(args.input, args.coder, args.show, device, args.output)
+    _decode(args.input, args.coder, device, args.checkpoint, args.output)
 
 
 def parse_args(argv):
