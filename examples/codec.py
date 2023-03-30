@@ -198,7 +198,7 @@ def parse_header(header):
 
 def read_body(fd):
     lstrings = []
-    shape = read_uints(fd, 2)
+    shape = read_uints(fd, 3)
     n_strings = read_uints(fd, 1)[0]
     for _ in range(n_strings):
         s = read_bytes(fd, read_uints(fd, 1)[0])
@@ -209,7 +209,7 @@ def read_body(fd):
 
 def write_body(fd, shape, out_strings):
     bytes_cnt = 0
-    bytes_cnt = write_uints(fd, (shape[0], shape[1], len(out_strings)))
+    bytes_cnt = write_uints(fd, (shape[0], shape[1], shape[2], len(out_strings)))
     for s in out_strings:
         bytes_cnt += write_uints(fd, (len(s[0]),))
         bytes_cnt += write_bytes(fd, s[0])
@@ -472,7 +472,7 @@ def decode_image(f, codec: CodecInfo, output):
             with Path(output).open("wb") as fout:
                 write_frame(fout, rec, codec.original_bitdepth)
         else:
-            OmeTiffWriter.save(img, output, dim_order='YX')
+            OmeTiffWriter.save(img, output, dim_order='ZYX')
 
     return {"img": img}
 
