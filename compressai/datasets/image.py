@@ -33,6 +33,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 
 from compressai.registry import register_dataset
+from aicsimageio.writers import OmeTiffWriter
 
 from monai.transforms import SpatialPad
 from aicsimageio import AICSImage
@@ -90,10 +91,12 @@ class ImageFolder(Dataset):
         if self.transform:
             img= self.transform(img)
         # Apply optional padding to fit z-axis to model shape
-        if img.shape[1]<64:
-            img = SpatialPad(spatial_size=(64,128,128))(img)
+        #if img.shape[1]<64:
+        #    img = SpatialPad(spatial_size=(64,128,128))(img)
         # Clamp values to [0,1] before handing to model
-        return img.clamp_(0, 1)
+        img = img.clamp_(0, 1)
+        #OmeTiffWriter.save(img.squeeze(0).numpy(), f'/mnt/eternus/users/Jan/image_u_u_{index}.tiff', dim_order='ZYX')
+        return img 
 
     def __len__(self):
         return len(self.samples)
