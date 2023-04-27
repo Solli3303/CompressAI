@@ -28,13 +28,15 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import math
+import datetime
 
 import torch
 import torch.nn as nn
 
 from pytorch_msssim import ms_ssim
-
 from compressai.registry import register_criterion
+from aicsimageio.writers.ome_tiff_writer import OmeTiffWriter
+
 
 
 @register_criterion("RateDistortionLoss")
@@ -53,6 +55,9 @@ class RateDistortionLoss(nn.Module):
         self.return_type = return_type
 
     def forward(self, output, target):
+        # debug
+        saveprogress(target, output["x_hat"])
+
         N, _, Z, H, W = target.size()
         out = {}
         num_pixels = N * Z * H * W
@@ -62,14 +67,32 @@ class RateDistortionLoss(nn.Module):
             for likelihoods in output["likelihoods"].values()
         )
         if self.metric == ms_ssim:
-            out["ms_ssim_loss"] = self.metric(output["x_hat"], target, data_range=1)
+            out["ms_ssim_loss"] = self.metric(
+                output["x_hat"], target, data_range=1, size_average=True
+            )
             distortion = 1 - out["ms_ssim_loss"]
         else:
             out["mse_loss"] = self.metric(output["x_hat"], target)
             distortion = 255**2 * out["mse_loss"]
 
-        out["loss"] = self.lmbda * distortion + out["bpp_loss"]
+        out["loss"] = self.lmbda * distortion  # + out["bpp_loss"]
         if self.return_type == "all":
             return out
         else:
             return out[self.return_type]
+
+
+def saveprogress(input, prediction):
+    src_x = input[0][0].detach().cpu().numpy()
+    pred_x = prediction[0][0].detach().cpu().numpy()
+    now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    OmeTiffWriter.save(
+        src_x,
+        f"/mnt/eternus/users/Jan/loss_log/src_{now}.tiff",
+        dim_order="ZYX",
+    )
+    OmeTiffWriter.save(
+        pred_x,
+        f"/mnt/eternus/users/Jan/loss_log/pred_{now}.tiff",
+        dim_order="ZYX",
+    )
