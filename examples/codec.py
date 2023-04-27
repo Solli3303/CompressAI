@@ -43,7 +43,7 @@ import torch.nn.functional as F
 from PIL import Image
 from torch import Tensor
 from torch.utils.model_zoo import tqdm
-from torchvision.transforms import ToPILImage, ToTensor
+from torchvision.transforms import ToPILImage, ToTensor  # noqa: F401
 
 import compressai
 
@@ -60,7 +60,8 @@ from compressai.zoo import image_models, models
 from aicsimageio import AICSImage
 from pathlib import Path
 from aicsimageio.writers import OmeTiffWriter
-from monai.inferers import sliding_window_inference
+
+from monai.transforms import CenterSpatialCrop
 
 torch.backends.cudnn.deterministic = True
 
@@ -232,7 +233,7 @@ def convert_yuv420_rgb(
 ) -> Tensor:
     # yuv420 [0, 2**bitdepth-1] to rgb 444 [0, 1] only for now
     frame = to_tensors(frame, device=str(device), max_value=max_val)
-    frame = yuv_420_to_444(
+    frame = yuv_420_to_444( 
         tuple(c.unsqueeze(0).unsqueeze(0) for c in frame), mode="bicubic"  # type: ignore
     )
     return ycbcr2rgb(frame)  # type: ignore
@@ -268,7 +269,7 @@ def crop(x, size):
         x,
         (-padding_left, -padding_right, -padding_top, -padding_bottom, -padding_front, -padding_back),
         mode="constant",
-        value=0,
+        value=1,
     )
 
 def pad(x, p=2**6):
@@ -286,7 +287,7 @@ def pad(x, p=2**6):
         x,
         (padding_left, padding_right, padding_top, padding_bottom, padding_front, padding_back),
         mode="constant",
-        value=0,
+        value=1,
     )
 
 
@@ -320,8 +321,9 @@ def encode_image(input, codec: CodecInfo, output):
 
     d, h, w = x.size(2), x.size(3), x.size(4)
     p = 64  # maximum 6 strides of 2
-    x = pad(x, p)
-
+    #x = pad(x, p)
+    x = CenterSpatialCrop(roi_size=(1, 64, 256, 256))(x)
+    OmeTiffWriter.save(x.squeeze(0).squeeze(0).cpu().numpy(), f'/mnt/eternus/users/Jan/encode_input.tiff', dim_order='ZYX')
     with torch.no_grad():
         # out = sliding_window_inference(
         #                 inputs=x,
@@ -462,8 +464,9 @@ def decode_image(f, codec: CodecInfo, output):
     with torch.no_grad():
         out = codec.net.decompress(strings, shape)
 
-    x_hat = crop(out["x_hat"], codec.original_size)
-
+    #x_hat = crop(out["x_hat"], codec.original_size)
+    x_hat = out["x_hat"]
+    OmeTiffWriter.save(x_hat.squeeze(0).squeeze(0).cpu().numpy(), f'/mnt/eternus/users/Jan/dencoded_input.tiff', dim_order='ZYX')
     img = torch2img(x_hat)
 
     if output is not None:
