@@ -44,7 +44,7 @@ from compressai.losses import RateDistortionLoss
 from compressai.optimizers import net_aux_optimizer
 from compressai.zoo import image_models
 
-from monai.transforms import RandSpatialCrop
+from monai.transforms import RandSpatialCrop, CenterSpatialCrop, SpatialPad
 import monai.transforms as transforms
 
 import warnings
@@ -120,7 +120,7 @@ def train_one_epoch(
         aux_loss.backward()
         aux_optimizer.step()
 
-         # Write losses to TensorBoard
+        # Write losses to TensorBoard
         writer.add_scalar(f'Loss/{metric}_loss', out_criterion[f"{metric}_loss"].item(), global_step=epoch)
         writer.add_scalar('Loss/bpp_loss', out_criterion["bpp_loss"].item(), global_step=epoch)
         writer.add_scalar('Loss/total_loss', out_criterion["loss"].item(), global_step=epoch)
@@ -132,8 +132,8 @@ def train_one_epoch(
                 f"Train epoch {epoch}: ["
                 f"{i*len(d)}/{len(train_dataloader.dataset)}"
                 f" ({100. * i / len(train_dataloader):.0f}%)]"
+                f'\tLoss: {out_criterion["loss"].item():.3f} |'
                 f'\t{metric} loss: {out_criterion[f"{metric}_loss"].item():.3f} |'
-                f'\tMSE loss: {out_criterion["mse_loss"].item():.3f} |'
                 f'\tBpp loss: {out_criterion["bpp_loss"].item():.2f} |'
                 f"\tAux loss: {aux_loss.item():.2f}"
             )
@@ -220,7 +220,7 @@ def parse_args(argv):
         "-n",
         "--num-workers",
         type=int,
-        default=4,
+        default=4, 
         help="Dataloaders threads (default: %(default)s)",
     )
     parser.add_argument(
@@ -242,7 +242,7 @@ def parse_args(argv):
     parser.add_argument(
         "--aux-learning-rate",
         type=float,
-        default=1e-3,
+        default=1e-2,
         help="Auxiliary loss learning rate (default: %(default)s)",
     )
     parser.add_argument(
@@ -277,11 +277,11 @@ def main(argv):
         random.seed(args.seed)
 
     train_transforms = transforms.Compose(
-        [RandSpatialCrop(roi_size=(64, 128, 128), random_size= False), MetaToTensor()]
+        [SpatialPad(spatial_size=(100, 700, 1000), mode='constant'),RandSpatialCrop(roi_size=(64, 256, 256), random_size= False), MetaToTensor()]
     )
 
     test_transforms = transforms.Compose(
-        [RandSpatialCrop(roi_size=(64, 128, 128), random_size= False), MetaToTensor()]
+        [SpatialPad(spatial_size=(100, 700, 1000), mode='constant'),CenterSpatialCrop(roi_size=(64, 256, 256)), MetaToTensor()]
     )
 
     train_dataset = ImageFolder(args.dataset, split="train", transform=train_transforms)
