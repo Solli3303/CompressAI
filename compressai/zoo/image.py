@@ -199,6 +199,8 @@ cfgs = {
         6: (192, 320),
         7: (192, 320),
         8: (192, 320),
+        9: (256, 384),
+        10: (320, 448),
     },
     "bmshj2018-factorized-relu": {
         1: (128, 192),
@@ -303,7 +305,7 @@ def bmshj2018_factorized(
     if metric not in ("mse", "ms-ssim"):
         raise ValueError(f'Invalid metric "{metric}"')
 
-    if quality < 1 or quality > 8:
+    if quality < 1 or quality > 10:
         raise ValueError(f'Invalid quality "{quality}", should be between (1, 8)')
 
     return _load_model(
