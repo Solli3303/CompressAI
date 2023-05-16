@@ -148,3 +148,6 @@ examples/im2im/2D/lightning_logs/*
 
 *.csv
 examples/temp.tiff
+examples/runs
+runs/
+*.pth.tar
